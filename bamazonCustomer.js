@@ -20,22 +20,45 @@ var connection = mysql.createConnection({
       console.log(err);
     } else {
       
-      connection.query("SELECT * FROM products", function(err, res) {
-        if (err) {
-          console.log(err);
-        } else {
-          console.log("--------------------");
-
-          for (let i = 0; i < res.length; i++) {
-            console.log(res[i].item_id + " | " + res[i].product_name + " | $" + parseFloat(res[i].price).toFixed(2));
-            console.log("--------------------");
-          }
-          runApp();
-
-        }
-      } );
+      startApp();
     }
   });
+
+
+  function startApp() {
+    connection.query("SELECT * FROM products", function(err, res) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("--------------------");
+
+        for (let i = 0; i < res.length; i++) {
+          console.log(res[i].item_id + " | " + res[i].product_name + " | $" + parseFloat(res[i].price).toFixed(2));
+          console.log("--------------------");
+        }
+          inquirer.prompt({
+            name: "choice",
+            type: "list",
+            message: "What would you like to do?",
+            choices: ["Make a purchase", "Exit"]
+          }).then(function(response) {
+
+            switch(response.choice) {
+              case "Make a purchase":
+                runApp();
+                break;
+
+              case "Exit":
+                connection.end();
+                break;
+            }
+          })
+
+      }
+    } );
+  };
+
+
 
   function runApp() {
     inquirer.prompt([{
@@ -68,7 +91,6 @@ var connection = mysql.createConnection({
               let cost = res[0].price;
               let ID = response.Id;
               let Quantity = parseFloat(res[0].stock_quantity) - parseFloat(response.quantity);
-              console.log(Quantity);
               if (Quantity >= 0) {
                     let total = parseFloat(cost) * parseFloat(response.quantity);
                     connection.query("UPDATE products SET ? WHERE ?", [{
@@ -83,7 +105,7 @@ var connection = mysql.createConnection({
                         
                         console.log(result.affectedRows + " products updated!");
                         console.log("You spent $" + parseFloat(total).toFixed(2) + " on your order today!");
-                        connection.end();
+                        startApp();
 
               
                       }
@@ -97,4 +119,4 @@ var connection = mysql.createConnection({
       } );
       
   })
-  }
+  };
